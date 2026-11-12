@@ -1,0 +1,19 @@
+{
+  "name": "pichat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PiChat — email-first contacts, invitations, and messaging",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "multer": "^2.4.0"
+  }
+}

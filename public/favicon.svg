@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
+  <defs>
+    <linearGradient id="core" x1="12" y1="10" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3f9a6f"/>
+      <stop offset="100%" stop-color="#1f4a36"/>
+    </linearGradient>
+  </defs>
+  <rect width="56" height="56" rx="14" fill="#faf6ef"/>
+  <g transform="translate(28 10) scale(.58) translate(-11 -8.5)">
+    <path fill="#fffef9" stroke="rgba(47,107,79,.28)" stroke-width="1.15" d="M18 1.5H4.6c-1.05 0-2 .9-2 2v7.4c0 1.1.95 2 2 2h2.4v2.8l3.1-2.8H18c1.05 0 2-.9 2-2V3.5c0-1.1-.95-2-2-2z"/>
+  </g>
+  <g transform="translate(46 28) scale(.52) rotate(78) translate(-11 -8.5)">
+    <path fill="#fffef9" stroke="rgba(47,107,79,.28)" stroke-width="1.15" d="M18 1.5H4.6c-1.05 0-2 .9-2 2v7.4c0 1.1.95 2 2 2h2.4v2.8l3.1-2.8H18c1.05 0 2-.9 2-2V3.5c0-1.1-.95-2-2-2z"/>
+  </g>
+  <g transform="translate(28 46) scale(.56) rotate(156) translate(-11 -8.5)">
+    <path fill="#fffef9" stroke="rgba(47,107,79,.28)" stroke-width="1.15" d="M18 1.5H4.6c-1.05 0-2 .9-2 2v7.4c0 1.1.95 2 2 2h2.4v2.8l3.1-2.8H18c1.05 0 2-.9 2-2V3.5c0-1.1-.95-2-2-2z"/>
+  </g>
+  <g transform="translate(10 28) scale(.54) rotate(-78) translate(-11 -8.5)">
+    <path fill="#fffef9" stroke="rgba(47,107,79,.28)" stroke-width="1.15" d="M18 1.5H4.6c-1.05 0-2 .9-2 2v7.4c0 1.1.95 2 2 2h2.4v2.8l3.1-2.8H18c1.05 0 2-.9 2-2V3.5c0-1.1-.95-2-2-2z"/>
+  </g>
+  <circle cx="28" cy="28" r="12.5" fill="url(#core)"/>
+  <text x="28" y="29" text-anchor="middle" dominant-baseline="central" fill="#fffefa" font-family="Georgia, serif" font-size="17" font-weight="700">À</text>
+</svg>
