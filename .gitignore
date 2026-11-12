@@ -5,6 +5,8 @@
 
 node_modules/
 uploads/
+image(1).png
+
 
 .DS_Store
 Thumbs.db
