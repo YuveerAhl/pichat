@@ -942,7 +942,8 @@ function messageSenderAvatar(message, own) {
 
 function messageRowHtml(own, senderAvatar, bubbleHtml, extraAttrs = '') {
   const side = own ? 'message-own' : 'message-other';
-  return `<div class="message-row ${side}" ${extraAttrs}>${senderAvatar}${bubbleHtml}</div>`;
+  const content = own ? `${bubbleHtml}${senderAvatar}` : `${senderAvatar}${bubbleHtml}`;
+  return `<div class="message-row ${side}" ${extraAttrs}>${content}</div>`;
 }
 
 function renderMessageReactions(reactions = []) {

@@ -239,10 +239,10 @@ a { color: inherit; text-decoration: none; }
 .group-message-stack .message-reactions-below .message-reactions { margin-top: 0; }
 .group-message-stack.message-own .message-reactions-below { display: flex; justify-content: flex-end; }
 .group-message-stack .message-row { width: 100%; max-width: 100%; }
-.message-row { display: flex; max-width: min(88%, 540px); align-items: flex-end; gap: 8px; align-self: flex-start; }
-.message-row.message-own { flex-direction: row-reverse; align-self: flex-end; }
+.message-row { display: flex; max-width: min(88%, 540px); align-items: flex-end; gap: 10px; align-self: flex-start; }
+.message-row.message-own { flex-direction: row; align-self: flex-end; }
 .message-row .message { max-width: min(100%, 520px); flex: 0 1 auto; align-self: auto; }
-.message-avatar { width: 32px; height: 32px; flex: none; font-size: .62rem; box-shadow: 0 2px 8px rgba(36, 48, 40, .12); }
+.message-avatar { width: 44px; height: 44px; flex: none; font-size: .72rem; box-shadow: 0 2px 8px rgba(36, 48, 40, .12); }
 .message-other { align-self: flex-start; }
 .response-site-link { margin-top: 12px; font-size: .92rem; }
 .response-site-link a { color: var(--green); font-weight: 700; text-decoration: underline; }
