@@ -13,6 +13,10 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000). Accounts and invitations are stored in `messaging.sqlite` in the project directory.
 
+## Install as an app (PWA)
+
+PiChat ships as an HTML5 progressive web app. In Chromium-based browsers, use **Install app** from the address bar when the site is served over HTTPS (or on `localhost`). On iOS, open the site in Safari and choose **Add to Home Screen**. The service worker caches the app shell for faster reloads; messaging still needs a live connection to the server. Set `APP_URL` to your public HTTPS origin so invitation links and installs use the same host.
+
 ## Email delivery
 
 Set `RESEND_API_KEY` in `.env` using a key from [Resend](https://resend.com/api-keys). For production, set `MAIL_FROM` to an address on a domain verified in Resend. The default `onboarding@resend.dev` sender is restricted to testing with your own verified recipient address. Set `APP_URL` to the publicly reachable address of the running app so invitation links work for recipients. Restart the server after changing environment variables.

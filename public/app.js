@@ -15,22 +15,6 @@ let activeChatColor = null;
 let activeChatFontFamily = 'Nunito';
 let activeChatFontData = null;
 let toastTimer;
-document.addEventListener('click', (event) => {
-  if (event.target.closest('.account-area')) return;
-  const accountMenu = document.querySelector('#account-menu');
-  const accountPopover = document.querySelector('#account-popover');
-  if (!accountMenu || !accountPopover) return;
-  accountPopover.hidden = true;
-  accountMenu.setAttribute('aria-expanded', 'false');
-});
-document.addEventListener('keydown', (event) => {
-  if (event.key !== 'Escape') return;
-  const accountMenu = document.querySelector('#account-menu');
-  const accountPopover = document.querySelector('#account-popover');
-  if (!accountMenu || !accountPopover) return;
-  accountPopover.hidden = true;
-  accountMenu.setAttribute('aria-expanded', 'false');
-});
 const fontOptions = [
   'DM Sans', 'Playfair Display', 'Montserrat', 'Poppins', 'Lora', 'Merriweather', 'Oswald',
   'Bebas Neue', 'Anton', 'Nunito', 'Raleway', 'Libre Baskerville', 'Cormorant Garamond',
@@ -122,18 +106,14 @@ function avatar(name, image, extraClass = '') {
     : `<span class="avatar ${extraClass}">${initials(name)}</span>`;
 }
 
-const brandLogoMark = '<img class="brand-logo-img" src="/logo.png" width="271" height="158" alt="" decoding="async" />';
-
-function brandWordmark() {
-  return '<span class="brand-name">Pi<span class="brand-accent">Chat</span></span>';
-}
+const brandLogoMark = '<span class="brand-mark-graphic" aria-hidden="true"><img class="brand-logo-img" src="/logo.png" width="900" height="895" alt="" decoding="async" /></span>';
 
 function brandLink(light = false) {
-  return `<a class="brand${light ? ' brand-light' : ''}" href="/" aria-label="PiChat home">${brandLogoMark}${brandWordmark()}</a>`;
+  return `<a class="brand${light ? ' brand-light' : ''}" href="/" aria-label="PiChat home">${brandLogoMark}</a>`;
 }
 
 function brandMobile() {
-  return `<div class="auth-mobile-brand">${brandLogoMark}${brandWordmark()}</div>`;
+  return `<div class="auth-mobile-brand">${brandLogoMark}</div>`;
 }
 
 function renderAuth(mode = 'signup') {
@@ -358,12 +338,11 @@ function renderDashboard() {
         <div class="sidebar-bottom">
           <div class="sidebar-note"><span class="note-spark">✳</span><p>Good things are better when shared.</p></div>
           <div class="account-area">
-            <button class="account-button" id="account-menu" type="button" aria-label="More account options" aria-haspopup="menu" aria-controls="account-popover" aria-expanded="false">
+            <button class="account-button" id="account-menu" type="button" aria-label="Edit your account">
               ${avatar(currentUser.name, currentUser.profile_picture)}
               <span class="account-details"><strong>${escapeText(currentUser.name)}</strong><small>${escapeText(currentUser.email)}</small></span>
-              <span class="account-more" aria-hidden="true">···</span>
+              <span class="account-more" aria-hidden="true">✎</span>
             </button>
-            <div class="account-popover" id="account-popover" role="menu" aria-label="Account options" hidden><button id="account-content-settings" type="button" role="menuitem">◉ <span>Content settings</span></button><button id="account-sign-out" type="button" role="menuitem">↗ <span>Sign out</span></button></div>
           </div>
         </div>
       </aside>
@@ -424,18 +403,7 @@ function renderDashboard() {
       showToast(error.message);
     }
   });
-  document.querySelector('#account-menu').addEventListener('click', (event) => {
-    const popover = document.querySelector('#account-popover');
-    const isOpening = popover.hidden;
-    popover.hidden = !isOpening;
-    event.currentTarget.setAttribute('aria-expanded', String(isOpening));
-  });
-  document.querySelector('#account-sign-out').addEventListener('click', signOut);
-  document.querySelector('#account-content-settings').addEventListener('click', () => {
-    document.querySelector('#account-popover').hidden = true;
-    document.querySelector('#account-menu').setAttribute('aria-expanded', 'false');
-    renderContentSettings();
-  });
+  document.querySelector('#account-menu').addEventListener('click', openAccountModal);
   if (activeView === 'invitations' && !inChat) {
     document.querySelectorAll('[data-refresh]').forEach((button) => button.addEventListener('click', async () => {
       await loadInvitations();
@@ -836,7 +804,7 @@ function renderGroupChatMessage(message) {
         <p class="message-removed">Message removed</p>
         <time>${time}</time>
       </article>`;
-    return `<div class="group-message-stack ${own ? 'message-own' : 'message-other'}" data-message-id="${message.id}">
+    return `<div class="group-message-stack ${own ? 'message-from-own' : 'message-from-other'}" data-message-id="${message.id}">
       <p class="message-sender-name">${escapeText(sender)}</p>
       ${messageRowHtml(own, senderAvatar, bubble)}
       ${reactions ? `<div class="message-reactions-below">${reactions}</div>` : ''}
@@ -851,7 +819,7 @@ function renderGroupChatMessage(message) {
       ${replyQuote}${body}${attachment}
       <time>${time}</time>
     </article>`;
-  return `<div class="group-message-stack ${own ? 'message-own' : 'message-other'}" data-message-id="${message.id}">
+  return `<div class="group-message-stack ${own ? 'message-from-own' : 'message-from-other'}" data-message-id="${message.id}">
     <p class="message-sender-name">${escapeText(sender)}</p>
     ${messageRowHtml(own, senderAvatar, bubble)}
     ${reactions ? `<div class="message-reactions-below">${reactions}</div>` : ''}
@@ -941,7 +909,7 @@ function messageSenderAvatar(message, own) {
 }
 
 function messageRowHtml(own, senderAvatar, bubbleHtml, extraAttrs = '') {
-  const side = own ? 'message-own' : 'message-other';
+  const side = own ? 'message-from-own' : 'message-from-other';
   const content = own ? `${bubbleHtml}${senderAvatar}` : `${senderAvatar}${bubbleHtml}`;
   return `<div class="message-row ${side}" ${extraAttrs}>${content}</div>`;
 }
@@ -1437,6 +1405,106 @@ function openGroupInviteModal() {
     }
   });
   document.querySelector('input[name="groupName"]').focus();
+}
+
+function openAccountModal() {
+  if (!currentUser) return;
+  const modalRoot = document.querySelector('#modal-root');
+  if (!modalRoot) return;
+  const existingSetting = currentUser.content_setting || '';
+  const photoPreview = currentUser.profile_picture
+    ? `<img src="${currentUser.profile_picture}" alt="" />`
+    : escapeText(initials(currentUser.name));
+  modalRoot.innerHTML = `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <section class="invite-modal account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <button class="modal-close" id="modal-close" type="button" aria-label="Close dialog">×</button>
+        <div class="modal-icon">◎</div>
+        <span class="eyebrow">YOUR ACCOUNT</span>
+        <h2 id="account-title">Edit your profile</h2>
+        <p>Update how you appear in PiChat. Your email stays tied to this account.</p>
+        <form id="account-form" class="form-stack">
+          <label class="photo-picker" for="account-profile-picture">
+            <span class="photo-picker-avatar" id="account-photo-preview">${photoPreview}</span>
+            <span><strong>Profile photo</strong><small>PNG, JPG, GIF or WebP · under 2 MB</small></span>
+            <input id="account-profile-picture" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
+          </label>
+          <label class="field"><span>Your name</span><input name="name" autocomplete="name" value="${escapeText(currentUser.name)}" required minlength="2" maxlength="80" /></label>
+          <div class="field field-readonly">
+            <span>Email address</span>
+            <input value="${escapeText(currentUser.email)}" readonly tabindex="-1" aria-readonly="true" />
+            <small class="field-hint">Email cannot be changed.</small>
+          </div>
+          <label class="field" for="account-content-setting">
+            <span>Content setting</span>
+            <select id="account-content-setting" name="contentSetting" required>
+              <option value="" disabled ${existingSetting ? '' : 'selected'}>Choose a setting</option>
+              ${contentSettings.map((setting) => `<option value="${setting.value}" ${existingSetting === setting.value ? 'selected' : ''}>${escapeText(setting.label)}</option>`).join('')}
+            </select>
+          </label>
+          <p class="content-setting-note account-setting-note">Messages sent to you are checked against this setting.</p>
+          <p class="form-error" id="account-error" aria-live="polite"></p>
+          <button class="button button-primary button-wide" type="submit">Save changes <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+    </div>`;
+
+  let profilePicture;
+  let profilePictureTouched = false;
+
+  const close = () => { modalRoot.innerHTML = ''; };
+  document.querySelector('#modal-close').addEventListener('click', close);
+  document.querySelector('#modal-backdrop').addEventListener('click', (event) => {
+    if (event.target.id === 'modal-backdrop') close();
+  });
+  document.addEventListener('keydown', function escapeModal(event) {
+    if (event.key === 'Escape') {
+      close();
+      document.removeEventListener('keydown', escapeModal);
+    }
+  }, { once: true });
+
+  const pictureInput = document.querySelector('#account-profile-picture');
+  pictureInput.addEventListener('change', async () => {
+    const file = pictureInput.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Choose a profile photo under 2 MB.');
+      pictureInput.value = '';
+      return;
+    }
+    profilePictureTouched = true;
+    profilePicture = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+    document.querySelector('#account-photo-preview').innerHTML = `<img src="${profilePicture}" alt="" />`;
+  });
+
+  document.querySelector('#account-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get('name') || '').trim();
+    const contentSetting = form.get('contentSetting');
+    const button = event.currentTarget.querySelector('button[type="submit"]');
+    const error = document.querySelector('#account-error');
+    button.disabled = true;
+    error.textContent = '';
+    const payload = { name, contentSetting };
+    if (profilePictureTouched) payload.profilePicture = profilePicture ?? null;
+    try {
+      const result = await api('/api/profile', { method: 'PUT', body: JSON.stringify(payload) });
+      currentUser = { ...currentUser, ...result.user };
+      close();
+      renderDashboard();
+      showToast('Your account has been updated.');
+    } catch (requestError) {
+      error.textContent = requestError.message;
+      button.disabled = false;
+    }
+  });
+  document.querySelector('#account-form input[name="name"]').focus();
 }
 
 function openInviteModal() {

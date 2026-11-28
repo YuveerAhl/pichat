@@ -19,5 +19,5 @@
     <path fill="#fffef9" stroke="rgba(47,107,79,.28)" stroke-width="1.15" d="M18 1.5H4.6c-1.05 0-2 .9-2 2v7.4c0 1.1.95 2 2 2h2.4v2.8l3.1-2.8H18c1.05 0 2-.9 2-2V3.5c0-1.1-.95-2-2-2z"/>
   </g>
   <circle cx="28" cy="28" r="12.5" fill="url(#core)"/>
-  <text x="28" y="29" text-anchor="middle" dominant-baseline="central" fill="#fffefa" font-family="Georgia, serif" font-size="17" font-weight="700">À</text>
+  <text x="28" y="29" text-anchor="middle" dominant-baseline="central" fill="#fffefa" font-family="Georgia, serif" font-size="17" font-weight="700">?</text>
 </svg>

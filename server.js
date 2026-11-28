@@ -881,6 +881,50 @@ app.put('/api/preferences/content-setting', requireUser, (request, response) => 
   response.json({ content_setting: contentSetting });
 });
 
+app.put('/api/profile', requireUser, (request, response) => {
+  if (request.body.email !== undefined) {
+    return response.status(400).json({ error: 'Your email address cannot be changed.' });
+  }
+
+  const name = typeof request.body.name === 'string' ? request.body.name.trim() : '';
+  if (name.length < 2 || name.length > 80) {
+    return response.status(400).json({ error: 'Name must be between 2 and 80 characters.' });
+  }
+
+  const contentSetting = request.body.contentSetting;
+  if (!['7+', '10+', '13+', '16+', 'adult'].includes(contentSetting)) {
+    return response.status(400).json({ error: 'Choose one of the available content settings.' });
+  }
+
+  let profilePicture = request.user.profile_picture;
+  if (Object.hasOwn(request.body, 'profilePicture')) {
+    const picture = request.body.profilePicture;
+    if (picture === null) {
+      profilePicture = null;
+    } else if (typeof picture === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/.test(picture) && picture.length <= 2_800_000) {
+      profilePicture = picture;
+    } else {
+      return response.status(400).json({ error: 'Choose an image under 2 MB (PNG, JPG, GIF, or WebP).' });
+    }
+  }
+
+  const previousSetting = request.user.content_setting;
+  database.prepare('UPDATE users SET name = ?, profile_picture = ?, content_setting = ? WHERE id = ?')
+    .run(name, profilePicture, contentSetting, request.user.id);
+  if (contentSetting !== previousSetting) filterExistingMessages(request.user.id, contentSetting);
+
+  response.json({
+    user: {
+      id: request.user.id,
+      name,
+      email: request.user.email,
+      profile_picture: profilePicture,
+      theme: request.user.theme,
+      content_setting: contentSetting
+    }
+  });
+});
+
 app.put('/api/contacts/:contactId/background', requireUser, (request, response) => {
   const contactId = Number(request.params.contactId);
   const image = request.body.image;
@@ -1558,6 +1602,15 @@ app.post('/api/invite/:token/:decision', (request, response) => {
 
 app.get('/invite/:token', (request, response) => response.sendFile(path.join(publicDir, 'index.html')));
 app.get('/group-invite/:token', (request, response) => response.sendFile(path.join(publicDir, 'index.html')));
+app.get('/manifest.webmanifest', (request, response) => {
+  response.type('application/manifest+json');
+  response.sendFile(path.join(publicDir, 'manifest.webmanifest'));
+});
+app.get('/sw.js', (request, response) => {
+  response.set('Cache-Control', 'no-cache');
+  response.type('application/javascript');
+  response.sendFile(path.join(publicDir, 'sw.js'));
+});
 app.use(express.static(publicDir));
 app.use((error, request, response, next) => {
   console.error(error);
