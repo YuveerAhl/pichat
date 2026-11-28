@@ -1,4 +1,5 @@
 .env
+.giphy_key
 .env.local
 .env.*.local
 *.sqlite*

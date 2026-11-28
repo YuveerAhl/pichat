@@ -250,7 +250,7 @@ function renderContentSettings() {
                   ${contentSettings.map((setting) => `<option value="${setting.value}" ${existingSetting === setting.value ? 'selected' : ''}>${escapeText(setting.label)}</option>`).join('')}
                 </select>
               </label>
-              <p class="content-setting-note">Messages are checked before delivery. Unscannable attachments, including images, GIFs, and voice messages, are blocked for every setting except Adult. Text checks use word matching and may not catch every contextual or disguised phrase.</p>
+              <p class="content-setting-note">Message text is checked before delivery. Images, GIFs, voice messages, and other attachments are delivered as sent. Text checks use word matching and may not catch every contextual or disguised phrase.</p>
             </div>
             <p class="form-error" id="content-setting-error" aria-live="polite"></p>
             <button class="button button-primary button-wide" type="submit">${canReturn ? 'Save content setting' : 'Continue'} <span aria-hidden="true">→</span></button>

@@ -291,6 +291,20 @@ function loginUrlWithInvite(token) {
 const resendApiKey = process.env.RESEND_API_KEY;
 const mailFrom = process.env.MAIL_FROM || 'PiChat <onboarding@resend.dev>';
 
+function loadGiphyApiKey() {
+  const fromEnv = process.env.GIPHY_API_KEY?.trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const fromFile = fs.readFileSync(path.join(dirname, '.giphy_key'), 'utf8').trim();
+    return fromFile || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const giphyApiKey = loadGiphyApiKey();
+const giphyNotConfiguredMessage = 'GIF search is not configured. Set GIPHY_API_KEY in .env or add your key to .giphy_key in the project root.';
+
 app.use(express.json({ limit: '4mb' }));
 
 const messageUpload = multer({
@@ -546,20 +560,12 @@ function filterExistingMessages(userId, contentSetting) {
   `).all(userId, userId, userId);
   const replace = database.prepare(`
     UPDATE messages
-    SET body = 'This message violates the recievers content settings',
-      attachment_name = NULL, attachment_type = NULL, attachment_path = NULL, attachment_url = NULL
+    SET body = 'This message violates the recievers content settings'
     WHERE id = ?
   `);
   for (const message of messages) {
     const textBad = violatesContentSetting(message.body, contentSetting);
-    const hasAttachment = Boolean(message.attachment_path || message.attachment_url);
     if (!textBad) continue;
-    if (message.attachment_path) {
-      const filePath = path.join(uploadsDir, path.basename(message.attachment_path));
-      fs.unlink(filePath, (error) => {
-        if (error && error.code !== 'ENOENT') console.error('Could not remove a blocked message attachment:', error.message);
-      });
-    }
     replace.run(message.id);
   }
 }
@@ -819,10 +825,10 @@ app.post('/api/contacts/:contactId/gifs', requireUser, async (request, response)
   const contactId = Number(request.params.contactId);
   const query = typeof request.body.query === 'string' ? request.body.query.trim().slice(0, 100) : '';
   if (!Number.isSafeInteger(contactId) || !getAcceptedConnection(request.user.id, contactId)) return response.status(404).json({ error: 'This contact is not available for messaging yet.' });
-  if (!process.env.GIPHY_API_KEY) return response.status(503).json({ error: 'GIF search is not configured. Set GIPHY_API_KEY on the server.' });
+  if (!giphyApiKey) return response.status(503).json({ error: giphyNotConfiguredMessage });
   try {
     const endpoint = new URL('https://api.giphy.com/v1/gifs/search');
-    endpoint.search = new URLSearchParams({ api_key: process.env.GIPHY_API_KEY, q: query || 'reactions', limit: '24', rating: 'g' });
+    endpoint.search = new URLSearchParams({ api_key: giphyApiKey, q: query || 'reactions', limit: '24', rating: 'g' });
     const result = await fetch(endpoint);
     const payload = await result.json();
     if (!result.ok) throw new Error('GIPHY could not complete the search.');
@@ -844,16 +850,6 @@ app.post('/api/contacts/:contactId/gifs/send', requireUser, (request, response) 
   if (!Number.isSafeInteger(contactId) || !getAcceptedConnection(request.user.id, contactId)) return response.status(404).json({ error: 'This contact is not available for messaging yet.' });
   if (!/^https:\/\/media\d*\.giphy\.com\//.test(url)) return response.status(400).json({ error: 'Choose a valid GIPHY GIF.' });
   const connection = getAcceptedConnection(request.user.id, contactId);
-  const recipient = database.prepare('SELECT content_setting FROM users WHERE id = ?').get(contactId);
-  if ((recipient.content_setting || '7+') !== 'adult') {
-    const result = database.prepare(`
-      INSERT INTO messages (invitation_id, sender_id, body)
-      VALUES (?, ?, 'This message violates the recievers content settings')
-    `).run(connection.invitation_id, request.user.id);
-    return response.status(201).json({ message: database.prepare(`
-      SELECT id, sender_id, body, created_at FROM messages WHERE id = ?
-    `).get(Number(result.lastInsertRowid)) });
-  }
   const result = database.prepare(`
     INSERT INTO messages (invitation_id, sender_id, body, attachment_name, attachment_type, attachment_url)
     VALUES (?, ?, '', ?, 'image/gif', ?)
@@ -1241,10 +1237,6 @@ app.post('/api/groups/:groupId/messages', requireUser, messageUpload.single('fil
   const setting = request.user.content_setting || '7+';
   const textBlocked = setting !== 'adult' && violatesContentSetting(body, setting);
   const storedBody = textBlocked ? 'This message violates the recievers content settings' : body;
-  if (textBlocked && request.file) {
-    fs.unlink(request.file.path, () => {});
-    return response.status(400).json({ error: 'Attachments are blocked while content settings filter this message.' });
-  }
   const result = database.prepare(`
     INSERT INTO group_messages (group_id, sender_id, body, attachment_name, attachment_type, attachment_path, reply_to_message_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -1406,10 +1398,10 @@ app.post('/api/groups/:groupId/gifs', requireUser, async (request, response) => 
   if (!Number.isSafeInteger(groupId) || !isGroupMember(groupId, request.user.id)) {
     return response.status(404).json({ error: 'This group is not available.' });
   }
-  if (!process.env.GIPHY_API_KEY) return response.status(503).json({ error: 'GIF search is not configured. Set GIPHY_API_KEY on the server.' });
+  if (!giphyApiKey) return response.status(503).json({ error: giphyNotConfiguredMessage });
   try {
     const endpoint = new URL('https://api.giphy.com/v1/gifs/search');
-    endpoint.search = new URLSearchParams({ api_key: process.env.GIPHY_API_KEY, q: query || 'reactions', limit: '24', rating: 'g' });
+    endpoint.search = new URLSearchParams({ api_key: giphyApiKey, q: query || 'reactions', limit: '24', rating: 'g' });
     const result = await fetch(endpoint);
     const payload = await result.json();
     if (!result.ok) throw new Error('GIPHY could not complete the search.');
@@ -1432,17 +1424,6 @@ app.post('/api/groups/:groupId/gifs/send', requireUser, (request, response) => {
     return response.status(404).json({ error: 'This group is not available.' });
   }
   if (!/^https:\/\/media\d*\.giphy\.com\//.test(url)) return response.status(400).json({ error: 'Choose a valid GIPHY GIF.' });
-  const setting = request.user.content_setting || '7+';
-  if (setting !== 'adult') {
-    const result = database.prepare(`
-      INSERT INTO group_messages (group_id, sender_id, body) VALUES (?, ?, 'This message violates the recievers content settings')
-    `).run(groupId, request.user.id);
-    const message = database.prepare(`
-      SELECT gm.id, gm.sender_id, users.name AS sender_name, gm.body, gm.created_at
-      FROM group_messages gm JOIN users ON users.id = gm.sender_id WHERE gm.id = ?
-    `).get(Number(result.lastInsertRowid));
-    return response.status(201).json({ message });
-  }
   const result = database.prepare(`
     INSERT INTO group_messages (group_id, sender_id, body, attachment_name, attachment_type, attachment_url)
     VALUES (?, ?, '', ?, 'image/gif', ?)
